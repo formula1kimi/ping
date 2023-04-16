@@ -49,7 +49,6 @@
 // it calls the OnFinish callback.
 //
 // For a full ping example, see "cmd/ping/ping.go".
-//
 package ping
 
 import (
@@ -438,6 +437,7 @@ func (p *Pinger) run(conn packetConn) error {
 	var g errgroup.Group
 
 	g.Go(func() error {
+		defer p.RecoverFromRecvIcmpPanic()
 		defer p.Stop()
 		return p.recvICMP(conn, recv)
 	})
@@ -448,6 +448,12 @@ func (p *Pinger) run(conn packetConn) error {
 	})
 
 	return g.Wait()
+}
+
+func (p *Pinger) RecoverFromRecvIcmpPanic() {
+	if r := recover(); r != nil {
+		fmt.Printf("Recovered from recv ICMP panic: %v\n", r)
+	}
 }
 
 func (p *Pinger) runLoop(
